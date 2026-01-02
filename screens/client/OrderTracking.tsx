@@ -62,37 +62,65 @@ export default function OrderTracking() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           <div className="space-y-8">
             {/* State Card */}
-            <div className={`relative w-full rounded-[2.5rem] p-8 shadow-soft overflow-hidden min-h-[340px] flex flex-col items-center justify-center text-center transition-all duration-500 border-2
+            <div className={`relative w-full rounded-[2.5rem] p-8 shadow-soft overflow-hidden min-h-[400px] flex flex-col items-center justify-center text-center transition-all duration-500 border-2
               ${status === 'preparing' ? 'bg-primary border-primary text-white' : ''}
               ${status === 'ready' ? 'bg-secondary border-secondary text-charcoal' : ''}
               ${status === 'delivered' ? 'bg-white border-slate-200 text-charcoal' : ''}
-              ${status === 'pending' ? 'bg-white border-slate-100 text-charcoal' : ''}
+              ${status === 'pending' || !status ? 'bg-white border-slate-100 text-charcoal' : ''}
 `}>
-              {status === 'preparing' && (
-                <div className="flex flex-col items-center w-full space-y-8 animate-in zoom-in duration-500">
-                  <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm animate-pulse">
-                    <ChefHat size={48} />
+              {(status === 'pending' || !status) && (
+                <div className="flex flex-col items-center w-full space-y-8 animate-in fade-in duration-500">
+                  <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center border-2 border-dashed border-slate-200 animate-[spin_10s_linear_infinite]">
+                    <History size={40} className="text-slate-300" />
                   </div>
                   <div className="space-y-3">
-                    <h3 className="text-3xl font-bold tracking-tight">En preparación</h3>
-                    <p className="text-slate-100/90 text-sm font-medium px-4">Relájate, nosotros nos ocupamos. Te avisaremos cuando esté listo.</p>
+                    <h3 className="text-3xl font-bold text-charcoal tracking-tight">Enviando pedido...</h3>
+                    <p className="text-slate-500 text-sm font-medium px-4">Estamos avisando al local. En unos segundos verás el estado de tu pedido.</p>
+                  </div>
+                </div>
+              )}
+
+              {status === 'preparing' && (
+                <div className="flex flex-col items-center w-full space-y-8 animate-in zoom-in duration-500">
+                  <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm relative">
+                    <div className="absolute inset-0 border-4 border-white/20 rounded-full animate-ping"></div>
+                    <ChefHat size={48} className="relative z-10" />
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="text-3xl font-bold tracking-tight">Cocinando</h3>
+                    <p className="text-slate-100/90 text-sm font-medium px-4">Relájate y disfrutá el lugar. Te avisaremos cuando el Foodtruck lo tenga listo.</p>
                   </div>
                 </div>
               )}
 
               {status === 'ready' && (
                 <div className="flex flex-col items-center w-full space-y-8 animate-in zoom-in duration-500">
-                  <div className="w-24 h-24 bg-charcoal rounded-full flex items-center justify-center shadow-xl animate-bounce">
+                  <div className="w-24 h-24 bg-charcoal rounded-full flex items-center justify-center shadow-2xl animate-bounce">
                     <CheckCircle2 size={48} className="text-secondary" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <h3 className="text-4xl font-extrabold text-charcoal tracking-tight">¡Listo!</h3>
-                    <p className="text-charcoal/70 font-bold text-sm">Retirá en el mostrador</p>
+                    <p className="text-charcoal/70 font-bold text-sm uppercase tracking-widest">Retirá en el mostrador</p>
                   </div>
-                  <div className="bg-white/40 backdrop-blur-md rounded-2xl p-6 w-full border border-charcoal/5 shadow-sm">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-charcoal/60 font-bold mb-2">Mostrá esta pantalla</p>
-                    <div className="text-5xl font-mono font-black text-charcoal tracking-widest">#{activeOrder.order_number || activeOrder.id}</div>
+                  <div className="bg-white/40 backdrop-blur-md rounded-[2rem] p-8 w-full border border-charcoal/5 shadow-sm">
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-charcoal/50 font-black mb-4">Código de Retiro</p>
+                    <div className="text-6xl font-mono font-black text-charcoal tracking-tighter">#{activeOrder.order_number || activeOrder.id?.slice(0, 4)}</div>
                   </div>
+                </div>
+              )}
+
+              {status === 'delivered' && (
+                <div className="flex flex-col items-center w-full space-y-8 animate-in fade-in duration-700">
+                  <div className="w-24 h-24 bg-secondary/20 rounded-full flex items-center justify-center">
+                    <Utensils size={40} className="text-secondary-dark" />
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="text-3xl font-bold text-charcoal tracking-tight">¡Buen provecho!</h3>
+                    <p className="text-slate-500 text-sm font-medium px-4">Tu pedido ya fue entregado. ¡Gracias por usar Fila0!</p>
+                  </div>
+                  <Link to="/" className="bg-charcoal text-white px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">
+                    Volver al Inicio
+                  </Link>
                 </div>
               )}
             </div>

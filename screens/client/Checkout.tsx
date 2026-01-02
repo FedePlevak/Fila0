@@ -12,6 +12,7 @@ export default function Checkout() {
   const [payment, setPayment] = useState<'app' | 'cash'>('app');
 
   const total = context?.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0) || 0;
+  const vendorName = context?.cart[0]?.category || 'FoodTruck'; // Using category as temporary name if vendor info is missing
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,7 +52,7 @@ export default function Checkout() {
       // 3. Local update and navigate
       context.addOrder({
         id: orderData.id,
-        vendorName: "Puesto", // Would fetch from vendor info
+        vendorName: vendorName,
         items: [...context.cart],
         total,
         status: OrderStatus.PREPARING,
@@ -70,18 +71,22 @@ export default function Checkout() {
 
   if (!context || context.cart.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen space-y-4">
-        <p className="text-slate-500">Tu carrito está vacío</p>
-        <button onClick={() => navigate('/')} className="bg-primary text-white px-6 py-2 rounded-full">Volver al inicio</button>
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-50 dark:bg-slate-900 px-6 text-center space-y-6">
+        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400">
+          <Ticket size={40} />
+        </div>
+        <h2 className="text-xl font-bold dark:text-white">Tu carrito está vacío</h2>
+        <p className="text-slate-500 text-sm">Parece que aún no has elegido nada delicioso.</p>
+        <button onClick={() => navigate('/')} className="bg-primary text-white font-bold px-8 py-3 rounded-2xl shadow-lg active:scale-95 transition-all">Explorar Menú</button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col pb-32 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors">
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#1E1E1E]/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-charcoal dark:text-slate-300">
+    <div className="flex flex-col pb-32 min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between h-20">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
             <ArrowLeft size={24} />
           </button>
           <div className="flex items-center gap-2">
@@ -90,75 +95,81 @@ export default function Checkout() {
               <Ticket size={24} fill="currentColor" className="text-secondary" />
             </div>
           </div>
-          <button className="p-2 -mr-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-charcoal dark:text-slate-300">
-            <MoreVertical size={24} />
-          </button>
+          <div className="w-10"></div> {/* Spacer for balance */}
         </div>
       </header>
 
-      <main className="flex-grow px-5 pt-6 space-y-8 max-w-3xl mx-auto w-full">
-        <div className="text-center">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Tu pedido en</p>
-          <h1 className="text-2xl font-bold text-charcoal dark:text-white">Burger Station #4</h1>
+      <main className="flex-grow px-5 pt-8 space-y-10 max-w-3xl mx-auto w-full">
+        <div className="text-center space-y-2">
+          <p className="text-[10px] font-bold text-primary dark:text-secondary uppercase tracking-[0.3em]">Resumen de pedido</p>
+          <h1 className="text-3xl font-black text-charcoal dark:text-white tracking-tight">{vendorName}</h1>
         </div>
 
-        <section className="bg-white dark:bg-[#1E1E1E] rounded-2xl p-6 shadow-card border border-slate-100 dark:border-slate-800">
-          <h2 className="text-lg font-bold text-primary dark:text-secondary mb-6 flex items-center gap-2">Resumen</h2>
+        <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 shadow-soft border border-gray-100 dark:border-gray-700">
           <div className="space-y-6">
             {context.cart.map(item => (
-              <div key={item.id} className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div className="flex-grow pr-4">
-                  <p className="font-bold text-charcoal dark:text-white text-base">{item.name}</p>
-                  <p className="text-xs text-slate-500 mt-1">{item.description}</p>
-                  <p className="text-sm font-semibold text-primary dark:text-secondary mt-2">${(item.price * item.quantity).toFixed(2)}</p>
+              <div key={item.id} className="flex justify-between items-center group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center font-black text-primary text-sm">
+                    {item.quantity}x
+                  </div>
+                  <div>
+                    <p className="font-bold text-charcoal dark:text-white text-base leading-tight">{item.name}</p>
+                    <p className="text-xs text-slate-400 mt-1 font-medium">${item.price.toFixed(2)} c/u</p>
+                  </div>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-1 text-sm font-bold text-charcoal dark:text-white">
-                  x{item.quantity}
-                </div>
+                <span className="font-bold text-charcoal dark:text-white tracking-tight">${(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
-          <div className="mt-6 pt-6 flex justify-between items-end">
-            <span className="font-semibold text-slate-500 text-[10px] uppercase tracking-wider">Total</span>
-            <span className="text-3xl font-bold text-charcoal dark:text-white tracking-tight">${total.toFixed(2)}</span>
+
+          <div className="mt-8 pt-8 border-t border-dashed border-slate-100 dark:border-slate-700 space-y-4">
+            <div className="flex justify-between text-sm font-medium text-slate-400">
+              <span>Subtotal</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-charcoal dark:text-white text-lg">Total a pagar</span>
+              <span className="text-4xl font-black text-primary dark:text-white tracking-tighter">${total.toFixed(2)}</span>
+            </div>
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h3 className="text-sm font-bold text-charcoal dark:text-white uppercase tracking-widest px-1">Método de Pago</h3>
-          <div className="space-y-3">
+        <section className="space-y-6">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] px-4">Método de Pago</h3>
+          <div className="grid grid-cols-1 gap-4">
             <button
               onClick={() => setPayment('app')}
-              className={`w-full p-5 rounded-2xl border-2 transition-all text-left flex items-center justify-between ${payment === 'app' ? 'border-secondary bg-secondary/5 ring-1 ring-secondary' : 'border-white dark:border-slate-800 bg-white dark:bg-[#1E1E1E]'}`}
+              className={`group p-6 rounded-[2rem] border-2 transition-all text-left flex items-center justify-between ${payment === 'app' ? 'border-primary bg-primary/5 ring-4 ring-primary/5' : 'border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow-sm'}`}
             >
-              <div className="flex items-center gap-4">
-                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-primary">
+              <div className="flex items-center gap-5">
+                <div className={`p-4 rounded-2xl transition-colors ${payment === 'app' ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-700 text-slate-400'}`}>
                   <CreditCard size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-charcoal dark:text-white">Pagar ahora</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Tarjeta, MercadoPago, Apple Pay</p>
+                  <p className={`font-black tracking-tight ${payment === 'app' ? 'text-primary' : 'text-charcoal dark:text-white'}`}>Pagar ahora</p>
+                  <p className="text-xs text-slate-400 mt-0.5 font-medium">Tarjeta o MercadoPago</p>
                 </div>
               </div>
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${payment === 'app' ? 'bg-secondary border-secondary' : 'border-slate-200 dark:border-slate-700'}`}>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${payment === 'app' ? 'bg-primary border-primary' : 'border-slate-200 dark:border-slate-700'}`}>
                 {payment === 'app' && <Check size={14} className="text-white" strokeWidth={4} />}
               </div>
             </button>
 
             <button
               onClick={() => setPayment('cash')}
-              className={`w-full p-5 rounded-2xl border-2 transition-all text-left flex items-center justify-between ${payment === 'cash' ? 'border-secondary bg-secondary/5 ring-1 ring-secondary' : 'border-white dark:border-slate-800 bg-white dark:bg-[#1E1E1E]'}`}
+              className={`group p-6 rounded-[2rem] border-2 transition-all text-left flex items-center justify-between ${payment === 'cash' ? 'border-primary bg-primary/5 ring-4 ring-primary/5' : 'border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow-sm'}`}
             >
-              <div className="flex items-center gap-4">
-                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-primary">
+              <div className="flex items-center gap-5">
+                <div className={`p-4 rounded-2xl transition-colors ${payment === 'cash' ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-700 text-slate-400'}`}>
                   <Store size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-charcoal dark:text-white">Pagar en mostrador</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Efectivo o tarjeta al retirar</p>
+                  <p className={`font-black tracking-tight ${payment === 'cash' ? 'text-primary' : 'text-charcoal dark:text-white'}`}>Pagar al retirar</p>
+                  <p className="text-xs text-slate-400 mt-0.5 font-medium">Efectivo o tarjeta en el local</p>
                 </div>
               </div>
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${payment === 'cash' ? 'bg-secondary border-secondary' : 'border-slate-200 dark:border-slate-700'}`}>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${payment === 'cash' ? 'bg-primary border-primary' : 'border-slate-200 dark:border-slate-700'}`}>
                 {payment === 'cash' && <Check size={14} className="text-white" strokeWidth={4} />}
               </div>
             </button>
@@ -166,18 +177,24 @@ export default function Checkout() {
         </section>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#1E1E1E]/90 backdrop-blur-lg border-t border-slate-100 dark:border-slate-800 p-5 shadow-floating z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 p-6 z-40">
         <div className="max-w-3xl mx-auto">
           <button
             onClick={handleConfirm}
             disabled={isSubmitting}
-            className={`w-full bg-primary hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-xl shadow-lg flex items-center justify-between transition-all transform active:scale-[0.98] group ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`w-full bg-primary hover:bg-[#3d5460] text-white font-black h-16 px-8 rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-between transition-all transform active:scale-[0.98] group disabled:opacity-50`}
           >
-            <span className="flex items-center gap-2">
-              {isSubmitting ? 'Confirmando...' : 'Confirmar Pedido'}
-              {!isSubmitting && <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />}
-            </span>
-            <span className="bg-white/10 px-3 py-1 rounded-lg text-sm font-bold">${total.toFixed(2)}</span>
+            <div className="flex items-center gap-3">
+              {isSubmitting ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/20 border-t-white"></div>
+              ) : (
+                <Check size={20} className="text-secondary" />
+              )}
+              <span className="uppercase tracking-widest text-xs">{isSubmitting ? 'Procesando...' : 'Confirmar Pedido'}</span>
+            </div>
+            <div className="bg-white/10 px-4 py-1.5 rounded-xl text-sm font-black border border-white/10">
+              ${total.toFixed(2)}
+            </div>
           </button>
         </div>
       </div>

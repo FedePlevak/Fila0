@@ -148,8 +148,7 @@ export default function Landing() {
                                 <p className="text-slate-500 dark:text-gray-400 text-sm font-medium leading-relaxed">
                                     No hay app. No hay registros. No hay vueltas.
                                     <br /><br />
-                                    Escaneás el QR, pedís y listo.
-                                    <strong>Así de simple.</strong>
+                                    Escaneás el QR, pedís y listo. <strong>Así de simple.</strong>
                                 </p>
                             </div>
                         </div>
@@ -235,7 +234,7 @@ export default function Landing() {
                                         <p className="font-bold text-lg">hola@fila0.com</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 group cursor-pointer">
+                                {/* <div className="flex items-center gap-4 group cursor-pointer">
                                     <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors">
                                         <MessageSquare size={24} />
                                     </div>
@@ -243,7 +242,7 @@ export default function Landing() {
                                         <p className="text-xs font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors">Instagram</p>
                                         <p className="font-bold text-lg">@fila0_ok</p>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 

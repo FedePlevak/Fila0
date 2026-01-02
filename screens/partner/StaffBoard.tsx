@@ -194,4 +194,6 @@ export default function StaffBoard() {
           </section>
         </div>
       </main>
-    </di
+    </div>
+  );
+}
