@@ -247,23 +247,51 @@ export default function Landing() {
                         </div>
 
                         <div className="bg-white rounded-[3rem] p-10 text-charcoal shadow-2xl">
-                            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tu Nombre</label>
-                                    <input type="text" className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="Escribí aquí..." />
+                            {window.location.search.includes('sent=true') ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in duration-500">
+                                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                        <Heart size={40} fill="currentColor" />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-charcoal">¡Mensaje enviado!</h3>
+                                    <p className="text-slate-500 font-medium whitespace-pre-line">
+                                        Gracias por escribirnos.
+                                        Nos pondremos en contacto con vos muy pronto.
+                                    </p>
+                                    <button
+                                        onClick={() => window.history.replaceState({}, '', window.location.pathname)}
+                                        className="text-primary font-bold text-sm hover:underline"
+                                    >
+                                        Enviar otro mensaje
+                                    </button>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email</label>
-                                    <input type="email" className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="tu@empresa.com" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">¿Cómo podemos ayudarte?</label>
-                                    <textarea rows={4} className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-primary outline-none transition-all resize-none" placeholder="Contanos sobre tu proyecto..."></textarea>
-                                </div>
-                                <button className="w-full bg-primary text-white font-black py-5 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-sm">
-                                    Enviar Mensaje
-                                </button>
-                            </form>
+                            ) : (
+                                <form
+                                    className="space-y-6"
+                                    action="https://formsubmit.co/hola@fila0.com"
+                                    method="POST"
+                                >
+                                    {/* FormSubmit Configuration */}
+                                    <input type="hidden" name="_subject" value="Nuevo contacto desde Fila0 Landing!" />
+                                    <input type="hidden" name="_template" value="table" />
+                                    <input type="hidden" name="_next" value={window.location.origin + window.location.pathname + "?app=landing&sent=true"} />
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tu Nombre</label>
+                                        <input type="text" name="name" required className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="Escribí aquí..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email</label>
+                                        <input type="email" name="email" required className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="tu@empresa.com" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">¿Cómo podemos ayudarte?</label>
+                                        <textarea name="message" required rows={4} className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-primary outline-none transition-all resize-none" placeholder="Contanos sobre tu proyecto..."></textarea>
+                                    </div>
+                                    <button type="submit" className="w-full bg-primary text-white font-black py-5 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-sm">
+                                        Enviar Mensaje
+                                    </button>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
