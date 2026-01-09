@@ -39,7 +39,7 @@ export default function VendorMenu() {
 
   if (!vendor) return <div>Vendor not found</div>;
 
-  const cartTotal = context?.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0) || 0;
+  const cartTotal = context?.cart.reduce((sum, i) => sum + (i.product.price * i.quantity), 0) || 0;
   const cartCount = context?.cart.reduce((sum, i) => sum + i.quantity, 0) || 0;
 
   return (
@@ -111,13 +111,17 @@ export default function VendorMenu() {
                     />
                   </div>
                 </div>
-                <div className="mt-12 sm:mt-16 flex justify-between items-start">
-                  <div className="w-full">
-                    <h1 className="text-2xl sm:text-3xl font-black text-charcoal dark:text-white tracking-tight leading-tight">{vendor.name}</h1>
-                    <p className="text-slate-500 dark:text-gray-400 text-xs sm:text-sm mt-1 font-medium">{vendor.description}</p>
-                    <div className="flex items-center gap-4 sm:gap-6 mt-4 sm:mt-6 text-[10px] sm:text-sm font-bold text-slate-500">
-                      <span className="flex items-center gap-1.5"><Clock size={16} className="text-primary" /> {vendor.waitTime}</span>
-                      <span className="flex items-center gap-1.5 text-yellow-500"><Star size={16} className="fill-yellow-500" /> {vendor.rating} (120+)</span>
+                <div className="mt-16 sm:mt-20 flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div className="w-full pl-24 sm:pl-32">
+                    <h1 className="text-3xl sm:text-5xl font-black text-charcoal dark:text-white tracking-tight leading-tight">{vendor.name}</h1>
+                    <p className="text-slate-500 dark:text-gray-400 text-sm sm:text-lg mt-2 font-medium max-w-2xl leading-relaxed">{vendor.description}</p>
+                    <div className="flex items-center gap-6 mt-6 text-xs sm:text-sm font-bold text-slate-500">
+                      <span className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-700">
+                        <Clock size={16} className="text-primary" /> {vendor.waitTime}
+                      </span>
+                      <span className="flex items-center gap-2 text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1.5 rounded-full border border-yellow-100 dark:border-yellow-900/30">
+                        <Star size={16} className="fill-yellow-500" /> {vendor.rating} (120+)
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -134,7 +138,30 @@ export default function VendorMenu() {
               <div className="grid grid-cols-1 gap-4">
                 {items.filter(item => item.category === activeCategory).length > 0 ? (
                   items.filter(item => item.category === activeCategory).map(item => {
-                    const inCart = context?.cart.find(i => i.id === item.id);
+                    // Buscar si el producto ya está en el carrito (sumando cantidades si hay múltiples entradas del mismo producto)
+                    // Para simplificar la vista de menú, sumamos todas las variantes del mismo producto
+                    const cartItemsForProduct = context?.cart.filter(i => i.product.id === item.id) || [];
+                    const totalQuantity = cartItemsForProduct.reduce((acc, curr) => acc + curr.quantity, 0);
+                    const inCart = totalQuantity > 0;
+
+                    const handleAdd = () => {
+                      context?.addToCart({
+                        product: item,
+                        quantity: 1,
+                        removed_ingredients: [],
+                        selected_modifiers: {},
+                        uuid: self.crypto.randomUUID()
+                      });
+                    };
+
+                    const handleRemove = () => {
+                      // Estrategia simple: remover la última instancia agregada de este producto
+                      const lastInstance = cartItemsForProduct[cartItemsForProduct.length - 1];
+                      if (lastInstance) {
+                        context?.removeFromCart(lastInstance.uuid);
+                      }
+                    };
+
                     return (
                       <article key={item.id} className="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm border border-gray-50 dark:border-gray-700 flex gap-4 sm:gap-6 hover:shadow-md transition-all group">
                         <div className="flex-grow flex flex-col justify-between overflow-hidden">
@@ -146,13 +173,13 @@ export default function VendorMenu() {
                             <span className="font-black text-lg sm:text-xl text-primary dark:text-white whitespace-nowrap">${item.price.toFixed(2)}</span>
                             {inCart ? (
                               <div className="flex items-center bg-slate-50 dark:bg-gray-700 rounded-2xl p-0.5 sm:p-1 border border-slate-100 dark:border-gray-600">
-                                <button onClick={() => context?.removeFromCart(item.id)} className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-primary"><Minus size={16} /></button>
-                                <span className="text-sm sm:text-base font-black w-6 sm:w-8 text-center">{inCart.quantity}</span>
-                                <button onClick={() => context?.addToCart({ ...item, quantity: 1 })} className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-primary"><Plus size={16} /></button>
+                                <button onClick={handleRemove} className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-primary"><Minus size={16} /></button>
+                                <span className="text-sm sm:text-base font-black w-6 sm:w-8 text-center">{totalQuantity}</span>
+                                <button onClick={handleAdd} className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-primary"><Plus size={16} /></button>
                               </div>
                             ) : (
                               <button
-                                onClick={() => context?.addToCart({ ...item, quantity: 1 })}
+                                onClick={handleAdd}
                                 className="bg-primary hover:bg-[#3d5460] text-white font-bold px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[10px] sm:text-sm transition-all shadow-md active:scale-95 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
                               >
                                 <Plus size={14} /> Agregar
@@ -161,7 +188,7 @@ export default function VendorMenu() {
                           </div>
                         </div>
                         <div className="w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0 bg-slate-100 dark:bg-gray-700 rounded-2xl overflow-hidden border border-gray-50 dark:border-gray-600 shadow-inner">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <img src={item.image_url} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
                       </article>
                     );
@@ -191,17 +218,17 @@ export default function VendorMenu() {
                     <>
                       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
                         {context?.cart.map(item => (
-                          <div key={item.id} className="flex justify-between items-start gap-3">
+                          <div key={item.uuid} className="flex justify-between items-start gap-3">
                             <div className="flex gap-3">
                               <span className="font-black text-primary text-sm min-w-[20px]">{item.quantity}x</span>
                               <div className="space-y-1">
-                                <p className="text-sm font-bold text-charcoal dark:text-white leading-tight">{item.name}</p>
-                                <button onClick={() => context.removeFromCart(item.id)} className="text-[10px] text-red-400 font-bold hover:underline flex items-center gap-1">
+                                <p className="text-sm font-bold text-charcoal dark:text-white leading-tight">{item.product.name}</p>
+                                <button onClick={() => context.removeFromCart(item.uuid)} className="text-[10px] text-red-400 font-bold hover:underline flex items-center gap-1">
                                   <Trash2 size={10} /> Eliminar
                                 </button>
                               </div>
                             </div>
-                            <span className="text-sm font-black text-charcoal dark:text-white">${(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-sm font-black text-charcoal dark:text-white">${(item.product.price * item.quantity).toFixed(2)}</span>
                           </div>
                         ))}
                       </div>

@@ -1,33 +1,38 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { MenuItem } from '../types';
+import { Product } from '../types';
 
-export function useMenu(vendorId: string | undefined) {
-    const [items, setItems] = useState<MenuItem[]>([]);
+export function useMenu(foodTruckId: string | undefined) {
+    const [items, setItems] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!vendorId) return;
+        if (!foodTruckId) return;
 
         async function fetchMenu() {
             try {
+                // Query 'products' table, matching new schema
                 const { data, error } = await supabase
-                    .from('menu_items')
+                    .from('products')
                     .select('*')
-                    .eq('vendor_id', vendorId);
+                    .eq('food_truck_id', foodTruckId)
+                    .eq('available', true);
 
                 if (error) throw error;
 
-                const mappedItems: MenuItem[] = (data || []).map(item => ({
+                // Data matches Product interface mostly, but DB uses snake_case and ID
+                const mappedItems: Product[] = (data || []).map(item => ({
                     id: item.id,
-                    vendorId: item.vendor_id,
+                    food_truck_id: item.food_truck_id,
                     name: item.name,
                     description: item.description || '',
                     price: item.price,
-                    image: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80',
-                    category: item.category || 'General',
-                    popular: false
+                    image_url: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80',
+                    is_base_product: item.is_base_product,
+                    base_ingredients: item.base_ingredients,
+                    available: item.available,
+                    category: item.category || 'General'
                 }));
 
                 setItems(mappedItems);
@@ -39,7 +44,7 @@ export function useMenu(vendorId: string | undefined) {
         }
 
         fetchMenu();
-    }, [vendorId]);
+    }, [foodTruckId]);
 
     return { items, loading, error };
 }

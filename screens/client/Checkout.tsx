@@ -1,7 +1,6 @@
-
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical, CreditCard, Store, Check, ChevronRight, Ticket } from 'lucide-react';
+import { ArrowLeft, CreditCard, Store, Check, Ticket } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { AppContext } from '../../App';
 import { OrderStatus } from '../../types';
@@ -11,8 +10,9 @@ export default function Checkout() {
   const context = useContext(AppContext);
   const [payment, setPayment] = useState<'app' | 'cash'>('app');
 
-  const total = context?.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0) || 0;
-  const vendorName = context?.cart[0]?.category || 'FoodTruck'; // Using category as temporary name if vendor info is missing
+  const total = context?.cart.reduce((sum, i) => sum + (i.product.price * i.quantity), 0) || 0;
+  // TODO: Obtener nombre del vendor real. Asumimos que todos son del mismo vendor por ahora.
+  const vendorName = context?.cart[0]?.product.food_truck_id ? 'FoodTruck' : 'FoodTruck';
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,43 +21,54 @@ export default function Checkout() {
 
     setIsSubmitting(true);
     try {
-      // 1. Create the order
+      // Generar snapshot de items
+      const snapshotItems = context.cart.map(item => ({
+        product_id: item.product.id,
+        name: item.product.name,
+        unit_price: item.product.price,
+        quantity: item.quantity,
+        subtotal: item.product.price * item.quantity,
+        selected_modifiers: [] // TODO: Map actual modifiers if they were in cart
+      }));
+
+      // Generar Pickup Code simple (4 dígitos)
+      const pickupCode = Math.floor(Math.random() * 9000 + 1000).toString();
+
+      // Determinar estado inicial
+      const initialStatus: OrderStatus = payment === 'app' ? 'paid' : 'created';
+
+      // TODO: Usar el ID de FoodTruckPlaza real.
+      // Por el momento, usamos placeholder.
+      const fakeFoodTruckPlazaId = 'e1234567-e89b-12d3-a456-426614174001';
+
+      // 1. Create the order with SNAPSHOT
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
-          vendor_id: context.cart[0].vendorId,
+          food_truck_plaza_id: fakeFoodTruckPlazaId,
           total: total,
-          status: 'pending',
-          payment_status: payment === 'app' ? 'pending' : 'cash'
+          status: initialStatus,
+          payment_method: payment === 'app' ? 'online' : 'counter',
+          pickup_code: pickupCode,
+          snapshot: { items: snapshotItems }
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // 2. Insert order items
-      const orderItems = context.cart.map(item => ({
-        order_id: orderData.id,
-        menu_item_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.price
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // 3. Local update and navigate
+      // 2. Local update and navigate
       context.addOrder({
+        ...orderData, // Use the returned data which matches Order interface (mostly)
+        // Ensure TS happy
         id: orderData.id,
-        vendorName: vendorName,
-        items: [...context.cart],
-        total,
-        status: OrderStatus.PREPARING,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        paymentMethod: payment
+        food_truck_plaza_id: orderData.food_truck_plaza_id,
+        status: orderData.status as OrderStatus,
+        total: orderData.total,
+        payment_method: orderData.payment_method,
+        pickup_code: orderData.pickup_code,
+        created_at: orderData.created_at,
+        snapshot: orderData.snapshot
       });
 
       context.clearCart();
@@ -108,17 +119,17 @@ export default function Checkout() {
         <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 shadow-soft border border-gray-100 dark:border-gray-700">
           <div className="space-y-6">
             {context.cart.map(item => (
-              <div key={item.id} className="flex justify-between items-center group">
+              <div key={item.uuid} className="flex justify-between items-center group">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center font-black text-primary text-sm">
                     {item.quantity}x
                   </div>
                   <div>
-                    <p className="font-bold text-charcoal dark:text-white text-base leading-tight">{item.name}</p>
-                    <p className="text-xs text-slate-400 mt-1 font-medium">${item.price.toFixed(2)} c/u</p>
+                    <p className="font-bold text-charcoal dark:text-white text-base leading-tight">{item.product.name}</p>
+                    <p className="text-xs text-slate-400 mt-1 font-medium">${item.product.price.toFixed(2)} c/u</p>
                   </div>
                 </div>
-                <span className="font-bold text-charcoal dark:text-white tracking-tight">${(item.price * item.quantity).toFixed(2)}</span>
+                <span className="font-bold text-charcoal dark:text-white tracking-tight">${(item.product.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>

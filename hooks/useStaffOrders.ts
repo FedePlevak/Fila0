@@ -1,41 +1,29 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { Order } from '../types';
 
-export interface StaffOrder {
-    id: string;
-    status: string;
-    total: number;
-    payment_status: string;
-    created_at: string;
-    order_number: number;
-    items: {
-        name: string;
-        quantity: number;
-    }[];
-}
-
-export function useStaffOrders(vendorId: string) {
-    const [orders, setOrders] = useState<StaffOrder[]>([]);
+export function useStaffOrders(foodTruckPlazaId: string) {
+    const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!vendorId) return;
+        if (!foodTruckPlazaId) return;
 
         async function fetchOrders() {
+            // Modificamos la query para traer los campos nuevos (snapshot, pickup_code)
             const { data, error } = await supabase
                 .from('orders')
-                .select(`
-          id, status, total, payment_status, created_at, order_number,
-          order_items (
-            quantity,
-            menu_items (name)
-          )
-        `)
-                .eq('vendor_id', vendorId)
+                .select('*') // Select all since we need snapshot and other fields
+                .eq('food_truck_plaza_id', foodTruckPlazaId)
+                .neq('status', 'cancelled_unpaid') // Hide cancelled unpaid
+                .neq('status', 'delivered') // Optionally hide delivered from active board
                 .order('created_at', { ascending: false });
 
             if (data) {
-                setOrders(formatOrders(data));
+                setOrders(data as Order[]);
+            }
+            if (error) {
+                console.error('Error fetching orders:', error);
             }
             setLoading(false);
         }
@@ -43,10 +31,10 @@ export function useStaffOrders(vendorId: string) {
         fetchOrders();
 
         const channel = supabase
-            .channel(`staff-orders-${vendorId}`)
+            .channel(`staff-orders-${foodTruckPlazaId}`)
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'orders', filter: `vendor_id=eq.${vendorId}` },
+                { event: '*', schema: 'public', table: 'orders', filter: `food_truck_plaza_id=eq.${foodTruckPlazaId}` },
                 () => {
                     fetchOrders(); // Reload on any change
                 }
@@ -56,22 +44,7 @@ export function useStaffOrders(vendorId: string) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [vendorId]);
+    }, [foodTruckPlazaId]);
 
     return { orders, loading };
-}
-
-function formatOrders(data: any[]): StaffOrder[] {
-    return data.map(o => ({
-        id: o.id,
-        status: o.status,
-        total: o.total,
-        payment_status: o.payment_status,
-        created_at: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        order_number: o.order_number,
-        items: o.order_items.map((oi: any) => ({
-            name: oi.menu_items.name,
-            quantity: oi.quantity
-        }))
-    }));
 }

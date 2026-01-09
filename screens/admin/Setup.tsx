@@ -12,50 +12,59 @@ export default function Setup() {
         setLoading(true);
         setResult(null);
         try {
-            // 1. Check if organization already exists by slug
-            const { data: existingOrg } = await supabase
-                .from('organizations')
-                .select('id')
-                .eq('slug', 'palermo-soho')
-                .single();
+            // 1. Crear Plaza (Antes Organization)
+            const plazaSlug = 'palermo-soho';
+            const { data: existingPlaza } = await supabase.from('plazas').select('id').eq('slug', plazaSlug).single();
+            const plazaId = existingPlaza?.id || crypto.randomUUID();
 
-            const orgId = existingOrg?.id || crypto.randomUUID();
-
-            // 2. Upsert Organization (using existing ID if found)
-            const { error: orgError } = await supabase.from('organizations').upsert({
-                id: orgId,
+            const { error: plazaError } = await supabase.from('plazas').upsert({
+                id: plazaId,
                 name: 'Patio de Comidas Palermo',
-                slug: 'palermo-soho'
+                slug: plazaSlug,
+                status: 'active'
             });
-            if (orgError) throw orgError;
+            if (plazaError) throw new Error('Error creating plaza: ' + plazaError.message);
 
-            // 3. Create Vendors with the determined orgId
-            const vendor1Id = 'e1234567-e89b-12d3-a456-426614174001';
-            const vendor2Id = 'e1234567-e89b-12d3-a456-426614174002';
-            const vendor3Id = 'e1234567-e89b-12d3-a456-426614174003';
+            // 2. Crear Food Trucks (Entidades Globales)
+            const truck1Id = 'e1234567-e89b-12d3-a456-426614174001';
+            const truck2Id = 'e1234567-e89b-12d3-a456-426614174002';
 
-            const vendors = [
-                { id: vendor1Id, org_id: orgId, name: 'La Hamburguesería', description: 'Artesanales y rústicas', is_open: true, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80' },
-                { id: vendor2Id, org_id: orgId, name: 'Tacos El Güero', description: 'Auténticos tacos mexicanos', is_open: true, image_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865202?auto=format&fit=crop&q=80' },
-                { id: vendor3Id, org_id: orgId, name: 'Pizza Al Taglio', description: 'Estilo romano por porciones', is_open: true, image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80' }
+            const trucks = [
+                { id: truck1Id, name: 'La Hamburguesería', slug: 'la-hamburgueseria', description: 'Artesanales y rústicas', logo_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80' },
+                { id: truck2Id, name: 'Tacos El Güero', slug: 'tacos-el-guero', description: 'Auténticos tacos mexicanos', logo_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865202?auto=format&fit=crop&q=80' }
             ];
 
-            const { error: vendorError } = await supabase.from('vendors').upsert(vendors);
-            if (vendorError) throw vendorError;
+            const { error: truckError } = await supabase.from('food_trucks').upsert(trucks);
+            if (truckError) throw new Error('Error creating trucks: ' + truckError.message);
 
-            // 4. Create Menu Items
-            const menuItems = [
-                { vendor_id: vendor1Id, name: 'Classic Smashed', price: 12.50, category: 'Hamburguesas', available: true, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80' },
-                { vendor_id: vendor1Id, name: 'Bacon King', price: 14.00, category: 'Hamburguesas', available: true, image_url: 'https://images.unsplash.com/photo-1586816001966-79b736744398?auto=format&fit=crop&q=80' },
-                { vendor_id: vendor2Id, name: 'Tacos Pastor x3', price: 9.00, category: 'Tacos', available: true, image_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865202?auto=format&fit=crop&q=80' },
-                { vendor_id: vendor3Id, name: 'Porción Muzarella', price: 4.50, category: 'Pizza', available: true, image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80' }
+            // 3. Relacionar Food Trucks con Plaza
+            const relations = [
+                { plaza_id: plazaId, food_truck_id: truck1Id, status: 'active' },
+                { plaza_id: plazaId, food_truck_id: truck2Id, status: 'active' } // Ambos activos para probar
             ];
 
-            const { error: menuError } = await supabase.from('menu_items').upsert(menuItems);
-            if (menuError) throw menuError;
+            const { error: relError } = await supabase.from('food_truck_plazas').upsert(relations, { onConflict: 'plaza_id, food_truck_id' });
+            if (relError) throw new Error('Error linking trucks: ' + relError.message);
 
-            setResult({ success: true, message: '¡Base de datos inicializada con éxito!' });
+            // 4. Crear Productos (Menú)
+            // Borramos productos viejos para este truck si limpiamos? No, Upsert.
+            const products = [
+                { food_truck_id: truck1Id, name: 'Classic Smashed', price: 12500, category: 'Hamburguesas', available: true, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80', is_base_product: true },
+                { food_truck_id: truck1Id, name: 'Bacon King', price: 14000, category: 'Hamburguesas', available: true, image_url: 'https://images.unsplash.com/photo-1586816001966-79b736744398?auto=format&fit=crop&q=80', is_base_product: true },
+                { food_truck_id: truck2Id, name: 'Tacos Pastor x3', price: 9000, category: 'Tacos', available: true, image_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865202?auto=format&fit=crop&q=80', is_base_product: true }
+            ];
+
+            // Upsert requiere ID si queremos actualizar, aquí dejamos que genere nuevos o intentamos matchear por nombres? 
+            // Para seeding determinista, mejor generar UUIDs si es necesario, o borrar e insertar.
+            // Por simplicidad, borramos e insertamos para este demo setup.
+            await supabase.from('products').delete().in('food_truck_id', [truck1Id, truck2Id]);
+            const { error: prodError } = await supabase.from('products').insert(products);
+
+            if (prodError) throw new Error('Error creating products: ' + prodError.message);
+
+            setResult({ success: true, message: '¡Base de datos Fila0 v2 inicializada con éxito!' });
         } catch (err: any) {
+            console.error(err);
             setResult({ success: false, message: 'Error: ' + err.message });
         } finally {
             setLoading(false);
@@ -69,14 +78,14 @@ export default function Setup() {
                     <div className="inline-flex bg-primary/10 p-4 rounded-2xl text-primary mb-4">
                         <Ticket size={40} />
                     </div>
-                    <h1 className="text-2xl font-bold text-charcoal tracking-tight">Configuración Fila0</h1>
-                    <p className="text-slate-500 text-sm mt-2">Inicializa la base de datos con datos de prueba para empezar a testear.</p>
+                    <h1 className="text-2xl font-bold text-charcoal tracking-tight">Admin Setup Fila0</h1>
+                    <p className="text-slate-500 text-sm mt-2">Inicializa la base de datos v2 con Plazas y FoodTrucks.</p>
                 </div>
 
                 {result && (
                     <div className={`p-4 rounded-xl flex items-center gap-3 ${result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                         {result.success ? <Check size={20} /> : <AlertCircle size={20} />}
-                        <p className="text-sm font-bold">{result.message}</p>
+                        <p className="text-xs font-bold">{result.message}</p>
                     </div>
                 )}
 
@@ -88,7 +97,7 @@ export default function Setup() {
                     {loading ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white"></div>
                     ) : (
-                        <><Database size={20} /> Inicializar Datos</>
+                        <><Database size={20} /> Inicializar Datos v2</>
                     )}
                 </button>
 

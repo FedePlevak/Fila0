@@ -222,7 +222,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-          <p>© 2023 Fila. Todos los derechos reservados.</p>
+          <p>© 2026 Fila0 Todos los derechos reservados.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Instagram size={18} className="cursor-pointer hover:text-white transition-colors" />
             <Twitter size={18} className="cursor-pointer hover:text-white transition-colors" />

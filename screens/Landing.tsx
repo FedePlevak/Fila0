@@ -26,7 +26,7 @@ export default function Landing() {
             <header className="fixed top-0 left-0 right-0 z-50 p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-slate-100 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center w-full">
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                        <span className="text-3xl font-extrabold text-primary dark:text-white tracking-tight">Fila</span>
+                        <span className="text-3xl font-extrabold text-primary dark:text-white tracking-tight">Fila0</span>
                         <div className="bg-primary text-secondary rounded-lg p-1.5 transform -rotate-12 shadow-sm">
                             <Ticket size={24} fill="currentColor" className="text-secondary" />
                         </div>
@@ -65,7 +65,7 @@ export default function Landing() {
                             </div>
                             <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-2 tracking-tight">Para vos</h3>
                             <p className="text-sm text-slate-400 mb-6 font-medium leading-relaxed">Escaneá el QR, pedí y seguí con lo tuyo. Te avisamos por Pantalla cuando esté listo.</p>
-                            <a href={getUrl('app')} className="inline-flex items-center text-blue-600 font-black text-sm uppercase tracking-wider hover:gap-2 transition-all">
+                            <a /* href={getUrl('app')} */ className="inline-flex items-center text-blue-600 font-black text-sm uppercase tracking-wider hover:gap-2 transition-all">
                                 Probar Fila0 <ArrowRight size={16} className="ml-1" />
                             </a>
                         </div>
@@ -77,7 +77,7 @@ export default function Landing() {
                             </div>
                             <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-2 tracking-tight">Para tu local</h3>
                             <p className="text-sm text-slate-400 mb-6 font-medium leading-relaxed">Cocina organizada, pedidos sin gritos y clientes felices que no amontonan gente.</p>
-                            <a href={getUrl('user')} className="inline-flex items-center text-orange-600 font-black text-sm uppercase tracking-wider hover:gap-2 transition-all">
+                            <a /* href={getUrl('user')} */ className="inline-flex items-center text-orange-600 font-black text-sm uppercase tracking-wider hover:gap-2 transition-all">
                                 Gestionar Pedidos <ArrowRight size={16} className="ml-1" />
                             </a>
                         </div>
@@ -89,7 +89,7 @@ export default function Landing() {
                             </div>
                             <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-2 tracking-tight">Para la plaza</h3>
                             <p className="text-sm text-slate-400 mb-6 font-medium leading-relaxed">Control total del flujo, métricas reales y un ambiente tranquilo para que todos disfruten.</p>
-                            <a href={getUrl('admin')} className="inline-flex items-center text-purple-600 font-black text-sm uppercase tracking-wider hover:gap-2 transition-all">
+                            <a /* href={getUrl('admin')} */ className="inline-flex items-center text-purple-600 font-black text-sm uppercase tracking-wider hover:gap-2 transition-all">
                                 Dashboard Admin <ArrowRight size={16} className="ml-1" />
                             </a>
                         </div>
@@ -301,7 +301,7 @@ export default function Landing() {
             <footer className="py-12 bg-charcoal text-white border-t border-white/5">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col items-center space-y-8">
                     <div className="flex items-center gap-2 opacity-50">
-                        <span className="text-2xl font-extrabold tracking-tight">Fila</span>
+                        <span className="text-2xl font-extrabold tracking-tight">Fila0</span>
                         <div className="bg-white text-charcoal rounded-md p-1 transform -rotate-12">
                             <Ticket size={16} fill="currentColor" />
                         </div>

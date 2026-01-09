@@ -1,17 +1,24 @@
-
 import React, { useState, createContext, useContext } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, Navigate, Outlet } from 'react-router-dom';
 import { Store, Receipt, Kanban, Sun, Moon } from 'lucide-react';
+
 import Home from './screens/client/Home';
 import VendorMenu from './screens/client/VendorMenu';
 import Checkout from './screens/client/Checkout';
 import OrderTracking from './screens/client/OrderTracking';
+
 import StaffBoard from './screens/partner/StaffBoard';
-import MPConfig from './screens/partner/MPConfig';
-import Setup from './screens/admin/Setup';
 import VendorSettings from './screens/partner/VendorSettings';
+import MenuConfig from './screens/partner/MenuConfig';
+import MPConfig from './screens/partner/MPConfig';
+
+import Dashboard from './screens/admin/Dashboard';
+import Setup from './screens/admin/Setup';
+
 import Login from './screens/auth/Login';
 import Register from './screens/auth/Register';
+import Landing from './screens/Landing';
+
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 import { CartItem, Order, OrderStatus } from './types';
@@ -20,7 +27,7 @@ import { CartItem, Order, OrderStatus } from './types';
 interface AppContextType {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: string) => void;
+  removeFromCart: (uuid: string) => void;
   clearCart: () => void;
   orders: Order[];
   addOrder: (order: Order) => void;
@@ -33,10 +40,13 @@ const BottomNav = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
 
-  // Rutas donde se oculta el menú para dar prioridad a los botones de acción (Confirmar, Ver Pedido, etc)
+  // Rutas donde se oculta el menú para dar prioridad a los botones de acción
   const hideNav =
     ['/board', '/mercadopago', '/checkout', '/tracking'].includes(location.pathname) ||
-    location.pathname.startsWith('/vendor/');
+    location.pathname.startsWith('/vendor/') ||
+    location.pathname.startsWith('/config') ||
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/partner');
 
   if (hideNav) return null;
 
@@ -79,77 +89,86 @@ const ThemeToggle = () => {
   );
 };
 
-import Landing from './screens/Landing';
-
-// ... imports remain ...
+const ClientLayout = () => {
+  return (
+    <div className="pb-20">
+      <Outlet />
+      <BottomNav />
+    </div>
+  );
+};
 
 const SubdomainRouter = () => {
-  const host = window.location.hostname;
+  const hostname = window.location.hostname;
   let subdomain = 'landing';
 
-  if (host.startsWith('admin')) subdomain = 'admin';
-  else if (host.startsWith('user') || host.startsWith('partner')) subdomain = 'partner';
-  else if (host.startsWith('app')) subdomain = 'client';
-  else if (host.includes('localhost')) {
-    // For development, we might want to default to 'client' or have a way to switch.
-    // Let's check for a query param ?app=admin for testing locally
-    const params = new URLSearchParams(window.location.search);
-    const appParam = params.get('app');
-    if (appParam) subdomain = appParam;
-    else subdomain = 'client'; // Default dev mode
+  if (hostname.startsWith('admin')) subdomain = 'admin';
+  else if (hostname.startsWith('user') || hostname.startsWith('partner')) subdomain = 'partner';
+  else if (hostname.startsWith('app')) subdomain = 'client';
+  else if (hostname.includes('localhost')) {
+    // For development, we allow simple toggling via URL or default to combined view
+    // If we are on localhost, we might want to access EVERYTHING for ease of dev
+    // So we'll return a special 'dev' router or just the client one with extra routes
+    subdomain = 'dev';
   }
 
-  // --- CLIENT APP ---
-  if (subdomain === 'client') {
+  // --- ADMIN APP ---
+  if (subdomain === 'admin') {
     return (
-      <>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/vendor/:id" element={<VendorMenu />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/tracking" element={<OrderTracking />} />
-          {/* Shared Auth Routes for Client? Maybe simply login for persistence? */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
-        <BottomNav />
-      </>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/setup" element={<Setup />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     );
   }
 
   // --- PARTNER APP ---
   if (subdomain === 'partner') {
     return (
-      <div className="bg-slate-50 dark:bg-gray-900 min-h-screen">
-        <Routes>
-          <Route path="/" element={<PrivateRoute roles={['vendor', 'organizer', 'superadmin']}><StaffBoard /></PrivateRoute>} />
-          <Route path="/board" element={<PrivateRoute roles={['vendor', 'organizer', 'superadmin']}><StaffBoard /></PrivateRoute>} />
-          <Route path="/config" element={<PrivateRoute roles={['vendor', 'organizer', 'superadmin']}><VendorSettings /></PrivateRoute>} />
-          <Route path="/mercadopago" element={<PrivateRoute roles={['vendor', 'organizer', 'superadmin']}><MPConfig /></PrivateRoute>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/" element={<StaffBoard />} />
+        <Route path="/board" element={<StaffBoard />} />
+        <Route path="/config" element={<VendorSettings />} />
+        <Route path="/config/menu" element={<MenuConfig />} />
+        <Route path="/mercadopago" element={<MPConfig />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     );
   }
 
-  // --- ADMIN APP ---
-  if (subdomain === 'admin') {
-    return (
-      <div className="bg-slate-100 dark:bg-gray-950 min-h-screen">
-        <Routes>
-          <Route path="/" element={<PrivateRoute roles={['superadmin']}><Setup /></PrivateRoute>} />
-          <Route path="/setup" element={<PrivateRoute roles={['superadmin']}><Setup /></PrivateRoute>} />
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </div>
-    );
-  }
-
-  // --- LANDING ---
+  // --- CLIENT / DEV APP (Includes everything for testing) ---
   return (
     <Routes>
-      <Route path="*" element={<Landing />} />
+      <Route path="/" element={<Landing />} />
+
+      {/* Client Flow */}
+      <Route element={<ClientLayout />}>
+        <Route path="/home" element={<Home />} />
+        <Route path="/vendor/:id" element={<VendorMenu />} />
+        <Route path="/tracking" element={<OrderTracking />} />
+      </Route>
+      <Route path="/checkout" element={<Checkout />} />
+
+      {/* Partner Flow (Accessible in Dev) */}
+      <Route path="/partner/board" element={<StaffBoard />} />
+      <Route path="/config" element={<VendorSettings />} />
+      <Route path="/config/menu" element={<MenuConfig />} />
+      <Route path="/mercadopago" element={<MPConfig />} />
+
+      {/* Admin Flow (Accessible in Dev) */}
+      <Route path="/admin/dashboard" element={<Dashboard />} />
+      <Route path="/admin/setup" element={<Setup />} />
+
+      {/* Auth */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
@@ -158,25 +177,28 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // ... state handlers ...
-
   const addToCart = (item: CartItem) => {
     setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
-      if (existing) {
-        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i);
+      const existingIndex = prev.findIndex(i => i.uuid === item.uuid);
+      if (existingIndex >= 0) {
+        const newCart = [...prev];
+        newCart[existingIndex] = {
+          ...newCart[existingIndex],
+          quantity: newCart[existingIndex].quantity + item.quantity
+        };
+        return newCart;
       }
       return [...prev, item];
     });
   };
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = (uuid: string) => {
     setCart(prev => {
-      const existing = prev.find(i => i.id === id);
+      const existing = prev.find(i => i.uuid === uuid);
       if (existing && existing.quantity > 1) {
-        return prev.map(i => i.id === id ? { ...i, quantity: i.quantity - 1 } : i);
+        return prev.map(i => i.uuid === uuid ? { ...i, quantity: i.quantity - 1 } : i);
       }
-      return prev.filter(i => i.id !== id);
+      return prev.filter(i => i.uuid !== uuid);
     });
   };
 
@@ -188,12 +210,11 @@ export default function App() {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
   };
 
-
   return (
     <AuthProvider>
       <AppContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, orders, addOrder, updateOrderStatus }}>
         <BrowserRouter>
-          <div className="min-h-screen relative overflow-x-hidden transition-colors">
+          <div className="min-h-screen relative overflow-x-hidden transition-colors bg-slate-50 dark:bg-slate-950">
             <ThemeToggle />
             <SubdomainRouter />
           </div>

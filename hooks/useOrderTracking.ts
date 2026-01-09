@@ -3,7 +3,7 @@ import { supabase } from '../services/supabaseClient';
 import { OrderStatus } from '../types';
 
 export function useOrderTracking(orderId: string | undefined) {
-    const [status, setStatus] = useState<OrderStatus>(OrderStatus.PREPARING);
+    const [status, setStatus] = useState<OrderStatus>('created');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -18,7 +18,7 @@ export function useOrderTracking(orderId: string | undefined) {
                 .single();
 
             if (data && !error) {
-                setStatus(mapStatus(data.status));
+                setStatus(data.status as OrderStatus);
             }
             setLoading(false);
         }
@@ -37,7 +37,7 @@ export function useOrderTracking(orderId: string | undefined) {
                     filter: `id=eq.${orderId}`
                 },
                 (payload) => {
-                    setStatus(mapStatus(payload.new.status));
+                    setStatus(payload.new.status as OrderStatus);
                 }
             )
             .subscribe();
@@ -48,18 +48,4 @@ export function useOrderTracking(orderId: string | undefined) {
     }, [orderId]);
 
     return { status, loading };
-}
-
-function mapStatus(dbStatus: string): OrderStatus {
-    switch (dbStatus) {
-        case 'pending':
-        case 'preparing':
-            return OrderStatus.PREPARING;
-        case 'ready':
-            return OrderStatus.READY;
-        case 'delivered':
-            return OrderStatus.EXPIRED; // Delivered implies done
-        default:
-            return OrderStatus.PREPARING;
-    }
 }

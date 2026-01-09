@@ -6,33 +6,35 @@ import { storageService } from '../../services/storageService';
 
 export default function VendorSettings() {
     const navigate = useNavigate();
-    const vendorId = 'e1234567-e89b-12d3-a456-426614174001'; // Default fixed ID for demo
+    const vendorId = 'e1234567-e89b-12d3-a456-426614174001'; // Default fixed ID for demo (La Hamburguesería)
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState(false);
-    const [vendor, setVendor] = useState<any>(null);
+
+    // New entity: FoodTruck
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
+    const [logoUrl, setLogoUrl] = useState('');
 
     useEffect(() => {
         async function fetchVendor() {
             try {
+                // Consulta a la nueva tabla 'food_trucks'
                 const { data, error } = await supabase
-                    .from('vendors')
+                    .from('food_trucks')
                     .select('*')
                     .eq('id', vendorId)
                     .single();
 
                 if (error) throw error;
                 if (data) {
-                    setVendor(data);
                     setName(data.name);
                     setDescription(data.description || '');
-                    setImageUrl(data.image_url || '');
+                    setLogoUrl(data.logo_url || '');
                 }
             } catch (err: any) {
-                console.error('Error fetching vendor:', err.message);
+                console.error('Error fetching food truck:', err.message);
+                // Si falla por 404, quizás es porque no se corrió setup v2, dejar limpio
             } finally {
                 setLoading(false);
             }
@@ -45,9 +47,10 @@ export default function VendorSettings() {
         if (!file) return;
 
         setSaving(true);
-        const url = await storageService.uploadImage(file, `vendors/${vendorId}`);
+        // Ajustar path si es necesario
+        const url = await storageService.uploadImage(file, `food_trucks/${vendorId}`);
         if (url) {
-            setImageUrl(url);
+            setLogoUrl(url);
         }
         setSaving(false);
     };
@@ -57,11 +60,11 @@ export default function VendorSettings() {
         setSuccess(false);
         try {
             const { error } = await supabase
-                .from('vendors')
+                .from('food_trucks')
                 .update({
                     name,
                     description,
-                    image_url: imageUrl
+                    logo_url: logoUrl
                 })
                 .eq('id', vendorId);
 
@@ -91,7 +94,7 @@ export default function VendorSettings() {
                         <button onClick={() => navigate('/')} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors">
                             <ArrowLeft size={24} />
                         </button>
-                        <h1 className="text-xl font-black text-charcoal dark:text-white tracking-tight">Preferencias del Puesto</h1>
+                        <h1 className="text-xl font-black text-charcoal dark:text-white tracking-tight">Preferencias del FoodTruck</h1>
                     </div>
                     <button
                         onClick={handleSave}
@@ -121,7 +124,7 @@ export default function VendorSettings() {
                             <div className="relative group">
                                 <div className="aspect-square rounded-[2.5rem] overflow-hidden bg-slate-200 dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-xl">
                                     <img
-                                        src={imageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80'}
+                                        src={logoUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80'}
                                         alt="Current branding"
                                         className="w-full h-full object-cover"
                                     />
@@ -139,7 +142,7 @@ export default function VendorSettings() {
                         {/* Text Info */}
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-500 dark:text-slate-400">Nombre del Puesto</label>
+                                <label className="text-sm font-bold text-slate-500 dark:text-slate-400">Nombre del FoodTruck</label>
                                 <input
                                     type="text"
                                     value={name}
@@ -166,7 +169,7 @@ export default function VendorSettings() {
                     <ImageIcon className="text-primary shrink-0" size={24} />
                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                         <span className="font-bold text-primary block mb-1">Nota sobre las imágenes:</span>
-                        La foto principal se mostrará tanto en el listado de puestos como en el encabezado de tu menú. Asegúrate de que los colores contrasten bien con el texto blanco.
+                        El logo se mostrará en los listados de la plaza. Asegúrate de que sea representativo.
                     </p>
                 </div>
             </main>
